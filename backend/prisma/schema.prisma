@@ -1,0 +1,140 @@
+// Prisma schema for The Ink Room portfolio + CMS.
+// Database: Supabase PostgreSQL. Migrations live in ./migrations.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  // Pooled connection used by the running app (Supabase: port 6543, ?pgbouncer=true)
+  url       = env("DATABASE_URL")
+  // Direct connection used by `prisma migrate` (Supabase: port 5432)
+  directUrl = env("DIRECT_URL")
+}
+
+enum TattooSize {
+  SMALL
+  MEDIUM
+  LARGE
+}
+
+model Tattoo {
+  id             String     @id @default(uuid()) @db.Uuid
+  slug           String     @unique
+  title          String
+  description    String     @default("")
+  /// Storage object path of the optimised full-size WebP (inside the portfolio bucket)
+  imagePath      String
+  /// Storage object path of the optimised thumbnail WebP
+  thumbPath      String
+  imageWidth     Int
+  imageHeight    Int
+  /// Tiny base64 WebP used as a blur placeholder while the photograph loads
+  blurDataUrl    String     @default("")
+  imageAlt       String     @default("")
+  size           TattooSize
+  /// Estimated starting price in whole INR (rupees). Null = not shown.
+  estimatedPrice Int?
+  style          String?
+  placement      String?
+  isFeatured     Boolean    @default(false)
+  featuredOrder  Int?
+  isPublished    Boolean    @default(false)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  enquiries      Enquiry[]
+
+  @@index([isPublished, createdAt(sort: Desc)])
+  @@index([isPublished, size, createdAt(sort: Desc)])
+  @@index([isFeatured, featuredOrder])
+}
+
+/// Administrators sign in with their username or their email (at least one is set).
+model AdminUser {
+  id           String         @id @default(uuid()) @db.Uuid
+  username     String?        @unique
+  email        String?        @unique
+  passwordHash String
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  sessions     AdminSession[]
+}
+
+model AdminSession {
+  id          String    @id @default(uuid()) @db.Uuid
+  /// SHA-256 of the opaque session token stored in the HTTP-only cookie
+  tokenHash   String    @unique
+  /// Synchroniser token the admin client must echo in the X-CSRF-Token header
+  csrfToken   String
+  adminUserId String    @db.Uuid
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+  userAgent   String?
+  expiresAt   DateTime
+  lastSeenAt  DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+
+  @@index([adminUserId])
+  @@index([expiresAt])
+}
+
+/// Single-row table (id = 1) holding the artist's editable website information.
+model SiteSettings {
+  id                   Int      @id @default(1)
+  artistName           String   @default("")
+  brandName            String   @default("The Ink Room")
+  tagline              String   @default("")
+  homepageIntroduction String   @default("")
+  biography            String   @default("")
+  philosophy           String   @default("")
+  /// Free-text experience / specialties. Only rendered when filled in.
+  experience           String   @default("")
+  styles               String[] @default([])
+  phone                String   @default("")
+  whatsappNumber       String   @default("")
+  instagramUrl         String   @default("")
+  contactEmail         String   @default("")
+  location             String   @default("")
+  portraitPath         String?
+  portraitWidth        Int?
+  portraitHeight       Int?
+  portraitAlt          String   @default("")
+  /// [{ title, body }] — steps shown on the homepage and Process page
+  processSteps         Json     @default("[]")
+  /// [{ question, answer }] — shown on the Process / FAQ page
+  faqs                 Json     @default("[]")
+  featuredLimit        Int      @default(7)
+  updatedAt            DateTime @updatedAt
+}
+
+enum ContactMethod {
+  WHATSAPP
+  PHONE
+  EMAIL
+}
+
+enum EnquiryStatus {
+  NEW
+  HANDLED
+}
+
+model Enquiry {
+  id              String        @id @default(uuid()) @db.Uuid
+  name            String
+  phone           String
+  email           String?
+  idea            String
+  preferredSize   TattooSize?
+  placement       String?
+  contactMethod   ContactMethod
+  /// Optional reference to the portfolio piece the visitor enquired from
+  tattooId        String?       @db.Uuid
+  tattoo          Tattoo?       @relation(fields: [tattooId], references: [id], onDelete: SetNull)
+  /// Snapshot of the title at enquiry time, kept if the tattoo is later deleted
+  tattooTitle     String?
+  status          EnquiryStatus @default(NEW)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([status, createdAt(sort: Desc)])
+}

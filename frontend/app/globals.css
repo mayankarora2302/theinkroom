@@ -1,0 +1,199 @@
+@import 'tailwindcss';
+
+/* ───────────────────────────────────────────────────────────────────────────
+   The Ink Room — design tokens
+   A warm, near-monochrome palette so the photographs carry the colour.
+   ─────────────────────────────────────────────────────────────────────────── */
+@theme {
+  /* Surfaces */
+  --color-ink: #0f0e0d;        /* page */
+  --color-ink-2: #161513;      /* alternate sections */
+  --color-ink-3: #1e1c1a;      /* image wells, raised */
+  --color-line: #2c2926;       /* hairlines */
+  --color-line-strong: #46413b;
+
+  /* Text */
+  --color-bone: #ebe6dd;       /* primary text, warm ivory */
+  --color-bone-2: #b2aba0;     /* secondary text */
+  --color-mute: #8b857c;       /* metadata — 4.9:1 on ink */
+
+  /* Accent: a burnt umber, used sparingly for numerals, focus and links */
+  --color-accent: #a8835f;
+  --color-accent-strong: #c09a73;
+
+  /* Admin (light, functional) */
+  --color-paper: #f6f3ee;
+  --color-paper-2: #ece7df;
+  --color-card: #fffdfa;
+  --color-rule: #ddd6cb;
+  --color-graphite: #1b1917;
+  --color-graphite-2: #57524b;
+  --color-danger: #a9402f;
+  --color-danger-soft: #f6e4df;
+  --color-success: #3f6e47;
+  --color-success-soft: #e3eee1;
+  --color-warn-soft: #f5ecd9;
+
+  --font-display: var(--font-instrument), 'Times New Roman', serif;
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+
+  --ease-out-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-editorial: cubic-bezier(0.65, 0, 0.35, 1);
+
+  --breakpoint-xs: 26rem;
+}
+
+/* Fluid type scale */
+@utility text-display-xl {
+  font-family: var(--font-display);
+  font-size: clamp(3.25rem, 1.6rem + 7.2vw, 10rem);
+  line-height: 0.9;
+  letter-spacing: -0.025em;
+  font-weight: 400;
+}
+@utility text-display-l {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 1.55rem + 3.9vw, 5.75rem);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  font-weight: 400;
+}
+@utility text-display-m {
+  font-family: var(--font-display);
+  font-size: clamp(1.875rem, 1.4rem + 1.9vw, 3.25rem);
+  line-height: 1.04;
+  letter-spacing: -0.012em;
+  font-weight: 400;
+}
+@utility text-display-s {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 1.3rem + 0.7vw, 2rem);
+  line-height: 1.12;
+  letter-spacing: -0.005em;
+  font-weight: 400;
+}
+@utility text-lede {
+  font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
+  line-height: 1.6;
+}
+@utility text-meta {
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}
+@utility text-label {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* Layout */
+@utility gutter {
+  padding-inline: clamp(1rem, 0.5rem + 3vw, 3.5rem);
+}
+@utility page-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: clamp(0.75rem, 0.4rem + 1.4vw, 2rem);
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    background: var(--color-ink);
+    color: var(--color-bone);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.65;
+    overflow-x: clip;
+  }
+  ::selection {
+    background: var(--color-accent);
+    color: var(--color-ink);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-accent-strong);
+    outline-offset: 3px;
+    border-radius: 1px;
+  }
+  .admin :focus-visible {
+    outline-color: var(--color-graphite);
+  }
+  img {
+    -webkit-user-drag: none;
+  }
+  summary {
+    list-style: none;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+}
+
+/* Editorial link: hairline underline that draws in on hover */
+@utility link-line {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 100% 1px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  padding-bottom: 2px;
+  transition: background-size 300ms var(--ease-out-soft), color 200ms;
+  &:hover {
+    background-size: 0% 1px;
+    background-position: 100% 100%;
+  }
+}
+@utility link-draw {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0% 1px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  padding-bottom: 2px;
+  transition: background-size 300ms var(--ease-out-soft);
+  &:hover,
+  &[aria-current='page'] {
+    background-size: 100% 1px;
+  }
+}
+
+/* Gentle reveal on scroll (driven by components/ui/Reveal) */
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 700ms var(--ease-out-soft),
+    transform 700ms var(--ease-out-soft);
+}
+.reveal[data-shown='true'] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Carousel autoplay progress */
+@keyframes progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}
