@@ -11,3 +11,4 @@ frontend/next-env.d.ts
 test-results/
 playwright-report/
 e2e/.env.e2e
+*.tsbuildinfo

@@ -15,7 +15,8 @@ any new enquiries. The four large buttons take you to the most common tasks.
 1. **Tattoos → Upload tattoo** (or *Upload a new tattoo* on the Overview).
 2. **Add the photograph.** Tap *Choose a photograph*, or drag the file onto the box. Use the best-quality JPEG, PNG or
    WebP you have, up to 15 MB. The website makes an optimised copy automatically. iPhone photos in HEIC format need to
-   be shared or exported as JPEG first.
+   be shared or exported as JPEG first. Small photos are fine too; if one is under about 1000px, you'll see a note
+   that it may look a little soft when shown large, but it still uploads.
 3. **Title.** A short name visitors will see.
 4. **About this tattoo** *(optional)*. The idea, the story, or how it was made.
 5. **Size.** Small, Medium or Large. Visitors can filter the portfolio by size.

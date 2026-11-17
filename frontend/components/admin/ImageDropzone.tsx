@@ -5,7 +5,8 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 
 export const MAX_UPLOAD_MB = Number(process.env.NEXT_PUBLIC_MAX_UPLOAD_MB ?? 15);
 const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp'];
-const MIN_EDGE = 600;
+/** Below this (shortest side, px) the form warns that the photo may look soft when shown large. */
+const SHARP_EDGE = 1000;
 
 function readDimensions(file: File): Promise<{ width: number; height: number }> {
   return new Promise((resolve, reject) => {
@@ -23,18 +24,27 @@ function readDimensions(file: File): Promise<{ width: number; height: number }> 
   });
 }
 
-/** Checks a chosen file before upload. The server validates again independently. */
-export async function validateImageFile(file: File): Promise<string | null> {
-  if (!ACCEPTED.includes(file.type)) return 'Please choose a JPEG, PNG or WebP photograph. (iPhone HEIC photos: export or share them as JPEG first.)';
+/**
+ * Checks a chosen file before upload. `error` blocks the upload; `warning` is advice only.
+ * The server validates again independently.
+ */
+export async function validateImageFile(file: File): Promise<{ error: string | null; warning: string | null }> {
+  if (!ACCEPTED.includes(file.type))
+    return { error: 'Please choose a JPEG, PNG or WebP photograph. (iPhone HEIC photos: export or share them as JPEG first.)', warning: null };
   if (file.size > MAX_UPLOAD_MB * 1024 * 1024)
-    return `This photo is ${(file.size / 1024 / 1024).toFixed(1)} MB. The limit is ${MAX_UPLOAD_MB} MB — try exporting a smaller version.`;
+    return { error: `This photo is ${(file.size / 1024 / 1024).toFixed(1)} MB. The limit is ${MAX_UPLOAD_MB} MB — try exporting a smaller version.`, warning: null };
   try {
     const { width, height } = await readDimensions(file);
-    if (Math.min(width, height) < MIN_EDGE) return `This photo is quite small (${width}×${height}px). Use one at least ${MIN_EDGE}px on its shortest side.`;
+    if (Math.min(width, height) < SHARP_EDGE) {
+      return {
+        error: null,
+        warning: `This photo is fairly small (${width}×${height}px), so it may look soft when shown large. It will still upload — use a bigger version if you have one.`,
+      };
+    }
   } catch {
-    return 'This file could not be opened as an image.';
+    return { error: 'This file could not be opened as an image.', warning: null };
   }
-  return null;
+  return { error: null, warning: null };
 }
 
 interface Props {
@@ -51,6 +61,7 @@ export function ImageDropzone({ file, currentUrl, onChange, error, label = 'Tatt
   const input = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
   const preview = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
   useEffect(() => () => {
     if (preview) URL.revokeObjectURL(preview);
@@ -58,8 +69,9 @@ export function ImageDropzone({ file, currentUrl, onChange, error, label = 'Tatt
 
   async function accept(f: File | undefined) {
     if (!f) return;
-    const problem = await validateImageFile(f);
+    const { error: problem, warning: advice } = await validateImageFile(f);
     setLocalError(problem);
+    setWarning(problem ? null : advice);
     if (!problem) onChange(f);
   }
 
@@ -145,6 +157,11 @@ export function ImageDropzone({ file, currentUrl, onChange, error, label = 'Tatt
       {message && (
         <p id={`${id}-error`} role="alert" className="mt-1.5 text-[0.875rem] text-danger">
           {message}
+        </p>
+      )}
+      {!message && file && warning && (
+        <p role="status" className="mt-2 rounded-[3px] bg-warn-soft px-3 py-2 text-[0.8125rem] leading-snug text-[#6b4f1a]">
+          {warning}
         </p>
       )}
     </div>

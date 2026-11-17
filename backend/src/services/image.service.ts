@@ -4,7 +4,6 @@ import { HttpError } from '../utils/http-error.js';
 sharp.cache(false);
 
 const ACCEPTED_FORMATS = new Set(['jpeg', 'png', 'webp']);
-const MIN_EDGE = 600;
 
 export interface ProcessedImage {
   full: Buffer;
@@ -35,13 +34,8 @@ export async function processImage(input: Buffer, opts: { maxEdge?: number; thum
   }
   if (!meta.width || !meta.height) throw invalid('The image dimensions could not be read.');
 
-  // EXIF orientations 5–8 swap width/height.
-  const rotated = (meta.orientation ?? 1) >= 5;
-  const w = rotated ? meta.height : meta.width;
-  const h = rotated ? meta.width : meta.height;
-  if (Math.min(w, h) < MIN_EDGE) {
-    throw invalid(`This photograph is quite small (${w}×${h}px). Please upload one at least ${MIN_EDGE}px on its shortest side so it looks sharp.`);
-  }
+  // Any size is accepted: small photos are never enlarged, only re-encoded. The admin form
+  // warns (without blocking) when a photo may look soft at large display sizes.
 
   const base = () => sharp(input, { limitInputPixels: 120_000_000 }).rotate();
 

@@ -34,7 +34,7 @@ describe('tattoo management', () => {
     expect(zero.status).toBe(400);
   });
 
-  it('rejects missing images, non-images and images that are too small', async () => {
+  it('rejects missing images and non-images', async () => {
     const s = await signIn();
     const noImage = await s.agent.post('/api/v1/admin/tattoos').set('X-CSRF-Token', s.csrf).field('title', 'x').field('size', 'SMALL');
     expect(noImage.status).toBe(400);
@@ -54,14 +54,19 @@ describe('tattoo management', () => {
       .field('title', 'x')
       .field('size', 'SMALL');
     expect(gif.status).toBe(415);
+  });
 
-    const tiny = await s.agent
+  it('accepts small photos without enlarging them', async () => {
+    const s = await signIn();
+    const res = await s.agent
       .post('/api/v1/admin/tattoos')
       .set('X-CSRF-Token', s.csrf)
-      .attach('image', await testImage(300, 300), { filename: 'x.jpg', contentType: 'image/jpeg' })
-      .field('title', 'x')
+      .attach('image', await testImage(370, 503), { filename: 'small.jpg', contentType: 'image/jpeg' })
+      .field('title', 'Small photo')
       .field('size', 'SMALL');
-    expect(tiny.status).toBe(422);
+    expect(res.status).toBe(201);
+    expect(res.body.data.image.width).toBe(370);
+    expect(res.body.data.image.height).toBe(503);
   });
 
   it('rejects files over the configured size limit', async () => {

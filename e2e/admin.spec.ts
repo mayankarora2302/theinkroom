@@ -98,6 +98,20 @@ test.describe('admin', () => {
     await expect(page.getByRole('link', { name: title })).toBeVisible();
   });
 
+  test('small photos upload, with a non-blocking warning', async ({ page }) => {
+    const title = `E2E piece small ${Date.now()}`;
+    await signIn(page);
+    await page.goto('/admin/tattoos/new');
+    await page.locator('input[type="file"]').setInputFiles({ name: 'small.jpg', mimeType: 'image/jpeg', buffer: await testPhoto(370, 503) });
+    await expect(page.getByRole('status').filter({ hasText: 'fairly small (370×503px)' })).toBeVisible();
+    await page.getByLabel('Title').fill(title);
+    await page.getByText('Small', { exact: true }).click();
+    await page.getByRole('switch', { name: 'Published' }).uncheck();
+    await page.getByRole('button', { name: 'Save draft' }).click();
+    await expect(page).toHaveURL(/\/admin\/tattoos$/);
+    await expect(page.getByRole('link', { name: title })).toBeVisible();
+  });
+
   test('rejects files that are not images', async ({ page }) => {
     await signIn(page);
     await page.goto('/admin/tattoos/new');

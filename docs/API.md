@@ -20,7 +20,7 @@ Base path: `/api/v1`. The site proxies this path to the Express API, so browsers
 | 404 | `NOT_FOUND` | Unknown or unpublished item |
 | 409 | `CONFLICT` | Homepage carousel already full |
 | 413 | `PAYLOAD_TOO_LARGE` | Photo larger than `MAX_UPLOAD_MB` |
-| 415 / 422 | `UNSUPPORTED_MEDIA_TYPE` | Not JPEG/PNG/WebP, not a real image, or under 600px on its short side |
+| 415 / 422 | `UNSUPPORTED_MEDIA_TYPE` | Not JPEG/PNG/WebP, not a real image, or over the pixel limit (decompression-bomb guard). Any normal size is accepted; small photos are never enlarged. |
 | 429 | `RATE_LIMITED` | Too many requests |
 | 502 | `STORAGE_ERROR` | Supabase Storage rejected the upload |
 
